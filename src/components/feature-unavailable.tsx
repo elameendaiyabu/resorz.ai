@@ -10,7 +10,7 @@ export function FeatureUnavailable() {
   const router = useRouter();
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4">
+    <div className="flex flex-col items-center justify-center p-4">
       <Alert className="max-w-md mb-4">
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>Feature Not Available</AlertTitle>
