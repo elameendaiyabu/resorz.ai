@@ -16,7 +16,7 @@ export default function Home() {
             productivity.
           </p>
           <Link href="/find" passHref>
-            <Button className="group bg-white text-purple-600 hover:bg-purple-100 transition-all duration-300 transform hover:scale-105 text-lg px-8 py-3 rounded-full shadow-lg">
+            <Button className="group bg-white text-purple-600 mt-5 hover:bg-purple-100 transition-all duration-300 transform hover:scale-105 text-lg px-8 py-3 rounded-full shadow-lg">
               Find Resources
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Button>
