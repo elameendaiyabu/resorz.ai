@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -28,6 +28,13 @@ import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 import { Heart } from "lucide-react";
 import Link from "next/link";
+import { createClient } from "@/utils/supabase/client";
+import { User } from "@supabase/supabase-js";
+import {
+  ResourceCard,
+  ResourceCardDescription,
+  ResourceCardTitle,
+} from "@/components/resource-card";
 
 const formSchema = z.object({
   course: z
@@ -54,7 +61,7 @@ const formSchema = z.object({
 const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY!;
 const genAI = new GoogleGenerativeAI(apiKey);
 
-interface Recomendations {
+export interface Recomendations {
   title: string;
   type: string;
   source: string;
@@ -72,6 +79,7 @@ export default function UserForm({
     Recomendations[]
   >([]);
   const [showForm, setShowForm] = useState(true);
+  const supabase = createClient();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -129,6 +137,7 @@ export default function UserForm({
         }
       ]
       Replace the ellipses with actual data when providing the recommendations.
+      difficulty should be between beginner, intermediate or advanced.
       `;
 
         const output = await chatSession.sendMessage(prompt);
@@ -136,7 +145,8 @@ export default function UserForm({
         const result = JSON.parse(response.text());
 
         setGeneratedResources(result);
-        console.log(generatedResources);
+        localStorage.removeItem("resources");
+        localStorage.setItem("resources", response.text());
         setShowForm(false);
         setSubmitted(false);
         return;
@@ -158,6 +168,82 @@ export default function UserForm({
 
     setSubmitted(false);
   }
+
+  const [user, setUser] = useState<User | null>();
+
+  const getUser = useCallback(async () => {
+    try {
+      const { data } = await supabase.auth.getUser();
+      setUser(data.user);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: "There was a problem fetching user data.",
+        action: <ToastAction altText="Try again">Try again</ToastAction>,
+      });
+      throw error;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabase]);
+
+  useEffect(() => {
+    getUser();
+  }, [getUser]);
+
+  const handleSave = async (
+    title: string,
+    description: string,
+    source: string,
+    type: string,
+    difficulty: string,
+    link: string,
+    userEmail?: string,
+  ) => {
+    if (!userEmail) {
+      return;
+    }
+    try {
+      const { data, error } = await supabase
+        .from("saved")
+        .insert([
+          {
+            title: title,
+            userEmail: userEmail,
+            description: description,
+            source: source,
+            type: type,
+            link: link,
+            difficulty: difficulty,
+          },
+        ])
+        .select();
+
+      if (error) {
+        toast({
+          variant: "destructive",
+          title: "Uh oh! Something went wrong.",
+          description: error.message,
+          action: <ToastAction altText="Try again">Try again</ToastAction>,
+        });
+        return;
+      }
+
+      console.log(data);
+      toast({
+        description: "Saved Resource",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: "There was a problem saving item. Try again.",
+        action: <ToastAction altText="Try again">Try again</ToastAction>,
+      });
+      throw error;
+    }
+  };
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <div
@@ -338,25 +424,45 @@ export default function UserForm({
         <div>
           {generatedResources.map((item, idx) => (
             <div key={idx} className="relative group  block p-2 h-full w-full">
-              <Card>
+              <ResourceCard>
+                { user?.email ? 
                 <div className="grid grid-flow-col justify-end">
                   <form>
-                    <button type="submit">
+                    <button
+                      type="submit"
+                      disabled={user?.email ? false : true}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleSave(
+                          item.title,
+                          item.description,
+                          item.source,
+                          item.type,
+                          item.difficulty,
+                          item.link,
+                          user?.email,
+                        );
+                      }}
+                    >
                       <Heart className="hover:cursor-pointer hover:fill-red-400" />
                     </button>
                   </form>
                 </div>
+                : <p></p>
+}
 
                 <Link href={item.link} target="_blank">
-                  <CardTitle>{item.title}</CardTitle>
-                  <CardDescription>{item.description}</CardDescription>
-                  <CardDescription className=" text-primary">
+                  <ResourceCardTitle>{item.title}</ResourceCardTitle>
+                  <ResourceCardDescription>
+                    {item.description}
+                  </ResourceCardDescription>
+                  <ResourceCardDescription className=" text-primary">
                     <div>Source: {item.source}</div>
                     <div>Type: {item.type}</div>
                     <div>Difficulty: {item.difficulty}</div>
-                  </CardDescription>
+                  </ResourceCardDescription>
                 </Link>
-              </Card>
+              </ResourceCard>
             </div>
           ))}
         </div>
@@ -364,55 +470,3 @@ export default function UserForm({
     </div>
   );
 }
-
-export const Card = ({
-  className,
-  children,
-}: {
-  className?: string;
-  children: React.ReactNode;
-}) => {
-  return (
-    <div
-      className={cn(
-        "rounded-2xl  h-full w-full p-4 overflow-hidden bg-muted border border-transparent dark:border-white/[0.2] group-hover:border-slate-700 ",
-        className,
-      )}
-    >
-      <div className="">
-        <div className="p-4">{children}</div>
-      </div>
-    </div>
-  );
-};
-export const CardTitle = ({
-  className,
-  children,
-}: {
-  className?: string;
-  children: React.ReactNode;
-}) => {
-  return (
-    <h4 className={cn("text-primary font-bold tracking-wide mt-4", className)}>
-      {children}
-    </h4>
-  );
-};
-export const CardDescription = ({
-  className,
-  children,
-}: {
-  className?: string;
-  children: React.ReactNode;
-}) => {
-  return (
-    <p
-      className={cn(
-        "mt-4 text-secondary-foreground tracking-wide leading-relaxed text-sm",
-        className,
-      )}
-    >
-      {children}
-    </p>
-  );
-};

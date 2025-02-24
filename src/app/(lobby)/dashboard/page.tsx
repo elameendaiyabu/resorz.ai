@@ -1,15 +1,16 @@
 import { ContentLayout } from "@/components/admin-panel/content-layout";
 import { Button } from "@/components/ui/button";
+import { Cover } from "@/components/ui/cover";
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 export default function Home() {
   return (
     <ContentLayout title="Dashboard">
-      <div className="bg-gradient-to-br rounded-sm from-red-600 to-rose-500 flex flex-col items-center justify-center p-4 text-white">
+      <div className="rounded-sm flex flex-col items-center justify-center p-4 ">
         <div className="text-center space-y-6 max-w-2xl">
-          <h1 className="text-5xl font-bold mb-4 animate-fade-in-down">
-            Welcome to Resorz.AI
+          <h1 className="text-2xl md:text-2xl lg:text-4xl font-semibold max-w-7xl mx-auto text-center relative z-20 py-2 bg-clip-text text-transparent bg-gradient-to-b from-neutral-800 via-neutral-700 to-neutral-700 dark:from-neutral-800 dark:via-white dark:to-white">
+            Find amazing resources <br /> at <Cover>warp speed</Cover>
           </h1>
           <p className="text-xl mb-8 animate-fade-in-up">
             Discover tailored resources that match your needs and boost your
@@ -23,17 +24,30 @@ export default function Home() {
           </Link>
         </div>
         <div className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-8 animate-fade-in">
-          {["Personalized", "Curated", "Efficient"].map((feature, index) => (
-            <div
-              key={index}
-              className="bg-white bg-opacity-20 p-6 rounded-lg backdrop-blur-md"
-            >
-              <h2 className="text-2xl font-semibold mb-2">{feature}</h2>
-              <p className="text-sm">
-                Experience {feature.toLowerCase()} resource recommendations.
-              </p>
-            </div>
-          ))}
+          <div className="p-6 rounded-lg backdrop-blur-md bg-neutral-200">
+            <h2 className="text-2xl font-semibold mb-2">Personalized</h2>
+            <p className="text-sm">
+              Get reading recommendations tailored to your learning style and
+              interests. Our intelligent system adapts to your needs, ensuring
+              every resource is relevant and impactful.
+            </p>
+          </div>
+          <div className="p-6 rounded-lg backdrop-blur-md bg-neutral-200">
+            <h2 className="text-2xl font-semibold mb-2">Curated</h2>
+            <p className="text-sm">
+              No more information overload—our AI handpicks the best reading
+              materials, so you only get high-quality, valuable resources that
+              truly enhance your understanding.
+            </p>
+          </div>
+          <div className="p-6 rounded-lg backdrop-blur-md bg-neutral-200">
+            <h2 className="text-2xl font-semibold mb-2">Efficient</h2>
+            <p className="text-sm">
+              Save time and study smarter with streamlined reading
+              recommendations. Focus on what matters most and accelerate your
+              learning with the right resources at the right time.
+            </p>
+          </div>
         </div>
       </div>
     </ContentLayout>

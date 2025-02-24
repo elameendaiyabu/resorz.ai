@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { LayoutGrid, LogOut, User } from "lucide-react";
+import { Book, LayoutGrid, LogIn, User } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -9,7 +9,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-  TooltipProvider
+  TooltipProvider,
 } from "@/components/ui/tooltip";
 import {
   DropdownMenu,
@@ -18,10 +18,52 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { createClient } from "@/utils/supabase/client";
+import { useCallback, useEffect, useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "../ui/toast";
+import { User as sUser } from "@supabase/supabase-js";
 
 export function UserNav() {
+  const supabase = createClient();
+  const { toast } = useToast();
+  const [user, setUser] = useState<sUser | null>();
+
+  const getUser = useCallback(async () => {
+    try {
+      const { data } = await supabase.auth.getUser();
+      setUser(data.user);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: "There was a problem fetching user data.",
+        action: <ToastAction altText="Try again">Try again</ToastAction>,
+      });
+      throw error;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabase]);
+
+  useEffect(() => {
+    getUser();
+  }, [getUser]);
+
+  if (!user || user == null || user == undefined) {
+    return (
+      <div>
+        <Button>
+          <Link href="/auth/login" className="flex gap-1">
+            <LogIn />
+            Login
+          </Link>
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <DropdownMenu>
       <TooltipProvider disableHoverableContent>
@@ -34,7 +76,9 @@ export function UserNav() {
               >
                 <Avatar className="h-8 w-8">
                   <AvatarImage src="#" alt="Avatar" />
-                  <AvatarFallback className="bg-transparent">JD</AvatarFallback>
+                  <AvatarFallback className="bg-transparent">
+                    {user.email && user.email.substring(0, 2).toUpperCase()}
+                  </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
@@ -46,9 +90,8 @@ export function UserNav() {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm font-medium leading-none">John Doe</p>
             <p className="text-xs leading-none text-muted-foreground">
-              johndoe@example.com
+              {user.email}
             </p>
           </div>
         </DropdownMenuLabel>
@@ -68,9 +111,9 @@ export function UserNav() {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="hover:cursor-pointer" onClick={() => {}}>
-          <LogOut className="w-4 h-4 mr-3 text-muted-foreground" />
-          Sign out
+        <DropdownMenuItem className="hover:cursor-pointer">
+          <Book className="w-4 h-4 mr-3 text-muted-foreground" />
+          FAQ
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

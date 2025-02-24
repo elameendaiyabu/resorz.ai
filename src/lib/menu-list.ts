@@ -2,6 +2,7 @@ import {
   Bookmark,
   BookText,
   Brain,
+  Gauge,
   LayoutGrid,
   LucideIcon,
 } from "lucide-react";
@@ -56,6 +57,17 @@ export function getMenuList(): Group[] {
           href: "/saved",
           label: "Saved Resources",
           icon: Bookmark,
+          submenus: [],
+        },
+      ],
+    },
+    {
+      groupLabel: "",
+      menus: [
+        {
+          href: "/previous",
+          label: "Previous Results",
+          icon: Gauge,
           submenus: [],
         },
       ],

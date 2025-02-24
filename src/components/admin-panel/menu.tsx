@@ -15,6 +15,12 @@ import {
   TooltipContent,
   TooltipProvider,
 } from "@/components/ui/tooltip";
+import { signout } from "@/app/(auth)/auth/actions";
+import { useCallback, useEffect, useState } from "react";
+import { User } from "@supabase/supabase-js";
+import { createClient } from "@/utils/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "../ui/toast";
 
 interface MenuProps {
   isOpen: boolean | undefined;
@@ -23,6 +29,30 @@ interface MenuProps {
 export function Menu({ isOpen }: MenuProps) {
   const pathname = usePathname();
   const menuList = getMenuList();
+  const supabase = createClient();
+  const { toast } = useToast();
+
+  const [user, setUser] = useState<User | null>();
+
+  const getUser = useCallback(async () => {
+    try {
+      const { data } = await supabase.auth.getUser();
+      setUser(data.user);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: "There was a problem fetching user data.",
+        action: <ToastAction altText="Try again">Try again</ToastAction>,
+      });
+      throw error;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [supabase]);
+
+  useEffect(() => {
+    getUser();
+  }, [getUser]);
 
   return (
     <ScrollArea className="[&>div>div[style]]:!block">
@@ -117,23 +147,29 @@ export function Menu({ isOpen }: MenuProps) {
             <TooltipProvider disableHoverableContent>
               <Tooltip delayDuration={100}>
                 <TooltipTrigger asChild>
-                  <Button
-                    onClick={() => { }}
-                    variant="outline"
-                    className="w-full justify-center h-10 mt-5"
-                  >
-                    <span className={cn(isOpen === false ? "" : "mr-4")}>
-                      <LogOut size={18} />
-                    </span>
-                    <p
-                      className={cn(
-                        "whitespace-nowrap",
-                        isOpen === false ? "opacity-0 hidden" : "opacity-100",
-                      )}
-                    >
-                      Sign out
-                    </p>
-                  </Button>
+                  {user && (
+                    <form className="w-full" action={signout}>
+                      <Button
+                        onClick={() => { }}
+                        variant="outline"
+                        className="w-full justify-center h-10 mt-5"
+                      >
+                        <span className={cn(isOpen === false ? "" : "mr-4")}>
+                          <LogOut size={18} />
+                        </span>
+                        <p
+                          className={cn(
+                            "whitespace-nowrap",
+                            isOpen === false
+                              ? "opacity-0 hidden"
+                              : "opacity-100",
+                          )}
+                        >
+                          Sign out
+                        </p>
+                      </Button>
+                    </form>
+                  )}
                 </TooltipTrigger>
                 {isOpen === false && (
                   <TooltipContent side="right">Sign out</TooltipContent>
